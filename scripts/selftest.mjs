@@ -10,8 +10,11 @@ import path from 'path'
 import { spawnSync } from 'child_process'
 import { createRequire } from 'module'
 import { getPaths } from './_paths.mjs'
+import { parseTestFlags } from './_test-flags.mjs'
 
 const { pluginRoot: PLUGIN, distDir: DIST } = getPaths()
+const { quick, skipBuild } = parseTestFlags()
+const tStart = Date.now()
 const require = createRequire(import.meta.url)
 const Module = require('module')
 
@@ -104,7 +107,10 @@ function assert (id, cond, note) {
   record(id, Boolean(cond), note || (cond ? 'ok' : 'assertion failed'))
 }
 
-console.log('\n=== ima-sync 自测 ===\n')
+console.log('\n=== ima-sync 自测 ===')
+if (quick) console.log('  模式: quick（跳过 bundle）')
+if (skipBuild && !quick) console.log('  模式: skip-build')
+console.log('')
 
 // --- utils ---
 const long = '甲'.repeat(2000)
@@ -509,6 +515,7 @@ const {
 const {
   activateProLicenseCloud,
   applyActivateResult,
+  applyHardRevokeIfNeeded,
   clearCloudLicenseCache,
   cloudLicenseEnabled,
   mockActivate
@@ -530,6 +537,15 @@ assert('TC-CLD-04', activateRes.ok && cloudSettings.entitlementsCacheKey === pro
 
 const { formatProCloudError } = require(path.join(PLUGIN, 'lib/license-cloud.js'))
 assert('TC-CLD-05', formatProCloudError({ language: 'zh' }, { error: 'seat_limit' }).includes('席位'), '云端席位错误文案')
+
+const hardRevokeSettings = {
+  proLicenseKey: proKey,
+  proActivated: true,
+  entitlementsCache: { tier: TIER_PRO, product: 'ima-sync', modules: ['mod.trust'], valid_until: '2099-01-01T00:00:00.000Z', signature: 'test', issued_at: '2026-01-01', limits: {} },
+  entitlementsCacheKey: proKey
+}
+applyHardRevokeIfNeeded(hardRevokeSettings, { error: 'license_inactive' })
+assert('TC-CLD-08', !hardRevokeSettings.proActivated && !hardRevokeSettings.entitlementsCache, 'hard revoke clears cache')
 
 const crypto = require('crypto')
 const { verifyEntitlementsEd25519, entitlementsSignBytes } = require(path.join(PLUGIN, 'lib/license-sign.js'))
@@ -811,6 +827,74 @@ assert('TC-GOV-07', govSensitive.codes.includes('SENSITIVE_PATTERN'), 'SENSITIVE
 
 assert('TC-GOV-08', t({ language: 'zh' }, 'governHeroTitle') === '推送前治理', 'Govern i18n zh')
 
+// --- Format (Pro Alpha · local rules) ---
+const {
+  formatForIma,
+  pickContentHashBody,
+  ruleWikilink,
+  ruleHighlight,
+  ruleCjkSpacing,
+  resolveActiveRuleIds
+} = require(path.join(PLUGIN, 'lib/format-pipeline.js'))
+const { buildFormatReport, formatFormatReportMarkdown } = require(path.join(PLUGIN, 'lib/format-report.js'))
+const { canUseFormatFull } = require(path.join(PLUGIN, 'lib/license.js'))
+
+assert('TC-FMT-01', ruleWikilink('见 [[页面|别名]]') === '见 别名', 'wikilink alias')
+assert('TC-FMT-02', ruleHighlight('这是==重点==') === '这是**重点**', 'highlight')
+assert('TC-FMT-03', ruleWikilink('[[仅页面]]') === '仅页面', 'wikilink plain')
+
+const fmtCore = formatForIma({
+  path: 'a.md',
+  title: '测试标题',
+  body: '[[链接]]\n\n==高亮==',
+  frontmatter: {}
+}, { format: { enabled: true, preset: 'core' } })
+assert('TC-FMT-04', fmtCore.rulesApplied.includes('WIKILINK') && fmtCore.rulesApplied.includes('HIGHLIGHT'), 'core rules applied')
+assert('TC-FMT-05', !fmtCore.body.includes('[[') && fmtCore.body.includes('**高亮**'), 'core output')
+
+const fmtSkip = formatForIma({
+  path: 'b.md',
+  title: 'x',
+  body: '[[x]]',
+  frontmatter: { format: 'skip' }
+}, { format: { enabled: true, preset: 'core' } })
+assert('TC-FMT-06', fmtSkip.skipped === true && fmtSkip.body === '[[x]]', 'format skip fm')
+
+assert('TC-FMT-07', pickContentHashBody('local', 'formatted', { format: { hashSource: 'local' } }) === 'local', 'hash local')
+assert('TC-FMT-08', pickContentHashBody('local', 'formatted', { format: { hashSource: 'formatted' } }) === 'formatted', 'hash formatted')
+
+const fmtTwice = formatForIma({ path: 'c.md', title: 'T', body: '[[a]]', frontmatter: {} }, { format: { preset: 'core' } })
+const fmtTwice2 = formatForIma({ path: 'c.md', title: 'T', body: fmtTwice.body, frontmatter: {} }, { format: { preset: 'core' } })
+assert('TC-FMT-09', fmtTwice2.body === fmtTwice.body, 'idempotent')
+
+const fmtReport = buildFormatReport([
+  { path: 'a.md', status: 'formatted', rulesApplied: ['WIKILINK'], deltaChars: 2 }
+])
+const fmtMd = formatFormatReportMarkdown(fmtReport, (k) => k)
+assert('TC-FMT-10', fmtMd.includes('formatReportTitle') && fmtMd.includes('WIKILINK') && !/apiKey/i.test(fmtMd), 'format report MD')
+
+assert('TC-FMT-11', !canUseFormatFull({ mockPro: false, proLicenseKey: '' }), 'format full blocked free')
+assert('TC-FMT-12', canUseFormatFull({ mockPro: true }), 'format full pro')
+
+const proRules = resolveActiveRuleIds({ mockPro: true, format: { preset: 'standard' } }, {})
+assert('TC-FMT-13', proRules.includes('CALLOUT') && proRules.includes('CJK_SPACING') === false, 'pro standard rules')
+
+const govObsidian = evaluateNoteRules({
+  path: 'd.md',
+  basename: 'd',
+  title: '标题够长',
+  body: '[[x]] and ==y==',
+  frontmatter: { import_key: 'k' },
+  settings: { govern: { maxBodyChars: 12000, minTitleChars: 4 } }
+})
+assert('TC-FMT-14', govObsidian.codes.includes('OBSIDIAN_SYNTAX'), 'govern OBSIDIAN_SYNTAX')
+
+assert('TC-FMT-15', ruleCjkSpacing('与API对接') === '与 API 对接', 'cjk spacing')
+
+const { rebuildNoteRaw } = require(path.join(PLUGIN, 'lib/format-pipeline.js'))
+const rebuilt = rebuildNoteRaw('---\ntitle: x\n---\n\n[[old]]', '**new** body')
+assert('TC-FMT-16', rebuilt.includes('title: x') && rebuilt.includes('**new** body') && !rebuilt.includes('[[old]]'), 'rebuildNoteRaw')
+
 // --- telemetry install ---
 const { buildInstallEvent, HOOKS } = require(path.join(PLUGIN, 'lib/telemetry.js'))
 const { maybeReportInstall } = require(path.join(PLUGIN, 'lib/telemetry-report.js'))
@@ -948,6 +1032,34 @@ upgradeSettings.remoteNotices.notices[0].max_version = '1.5.39'
 assert('TC-NOTICE-09', activeNotices(upgradeSettings, '1.5.40').length === 0, 'max_version hides on newer plugin')
 assert('TC-NOTICE-10', activeNotices(upgradeSettings, '1.5.38').length === 1, 'max_version shows on older plugin')
 
+const multiSettings = JSON.parse(JSON.stringify(noticeSettings))
+multiSettings.remoteNotices.dismissed = {}
+multiSettings.remoteNotices.notices = [
+  {
+    id: 'notice-a',
+    title: '公告 A',
+    body: '内容 A',
+    level: 'info',
+    active: true,
+    dismissible: true,
+    published_at: '2020-01-01T00:00:00.000Z',
+    expires_at: '2099-01-01T00:00:00.000Z',
+    min_version: '1.5.0'
+  },
+  {
+    id: 'notice-b',
+    title: '公告 B',
+    body: '内容 B',
+    level: 'warn',
+    active: true,
+    dismissible: true,
+    published_at: '2020-01-01T00:00:00.000Z',
+    expires_at: '2099-01-01T00:00:00.000Z',
+    min_version: '1.5.0'
+  }
+]
+assert('TC-NOTICE-11', activeNotices(multiSettings, '1.5.40').length === 2, 'multiple active notices')
+
 const remoteNoticesPath = path.join(PLUGIN, 'lib/remote-notices.js')
 const origRequestUrl = obsidianStub.requestUrl
 obsidianStub.requestUrl = async ({ url }) => {
@@ -980,15 +1092,20 @@ delete require.cache[remoteNoticesPath]
 require(remoteNoticesPath)
 
 // --- bundle & install ---
-const bundle = spawnSync('node', [path.join(PLUGIN, 'scripts/bundle.mjs')], {
-  env: { ...process.env, IMA_SYNC_ROOT: PLUGIN },
-  shell: true,
-  stdio: 'pipe',
-  encoding: 'utf8'
-})
-assert('TC-BUILD-01', bundle.status === 0, 'esbuild 打包')
-
 const distMain = path.join(DIST, 'main.js')
+
+if (skipBuild) {
+  assert('TC-BUILD-01', fs.existsSync(distMain), 'skip bundle · 复用 dist/main.js（先 npm run bundle）')
+} else {
+  const bundle = spawnSync('node', [path.join(PLUGIN, 'scripts/bundle.mjs')], {
+    env: { ...process.env, IMA_SYNC_ROOT: PLUGIN },
+    shell: true,
+    stdio: 'pipe',
+    encoding: 'utf8'
+  })
+  assert('TC-BUILD-01', bundle.status === 0, 'esbuild 打包')
+}
+
 assert('TC-BUILD-02', fs.existsSync(distMain) && fs.statSync(distMain).size > 10000, `dist/main.js ${fs.existsSync(distMain) ? fs.statSync(distMain).size : 0}b`)
 
 const syntax = spawnSync('node', ['--check', distMain], { encoding: 'utf8' })
@@ -1012,4 +1129,5 @@ if (failed.length) {
   for (const f of failed) console.log(`  ${f.id}: ${f.note}`)
   process.exit(1)
 }
-console.log('\n全部 PASS\n')
+const elapsed = ((Date.now() - tStart) / 1000).toFixed(1)
+console.log(`\n全部 PASS · ${elapsed}s${quick ? ' · quick' : ''}\n`)

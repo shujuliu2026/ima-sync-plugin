@@ -27,6 +27,7 @@
 
 ```bash
 npm run chronicle:ima-sync-pregate       # 功能自测 + 压力测试（发版前必过）
+npm run chronicle:ima-sync-pregate:quick # 开发循环 · 跳过 bundle + 缩小压力规模
 npm run chronicle:ima-trust-probe        # Trust 真机探针（须 .env 配 IMA_*）
 npm run chronicle:bundle-ima-sync        # 打包 dist/
 npm run chronicle:install-ima-sync -- --vault D:/你的Obsidian库路径
@@ -59,6 +60,7 @@ npm run chronicle:bundle-ima-sync -- --src D:/repos/ima-sync-plugin
 |------|------|
 | `chronicle:ima-sync-selftest` | 功能自测（含 TC-PROD-* · TC-REPO-*） |
 | `chronicle:ima-sync-stresstest` | 规模/压力 mock 自测 |
+| `chronicle:ima-sync-pregate:quick` | 开发快测（`--quick` · 跳过 bundle · 缩小压力） |
 | `chronicle:ima-trust-probe` | Trust 真机：`check_repeated_names` + `search_knowledge` |
 | `chronicle:bundle-ima-sync` | esbuild 单文件 + 复制 manifest/assets |
 | `chronicle:install-ima-sync` | 安装 dist/ 到 Obsidian vault |

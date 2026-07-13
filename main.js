@@ -29,7 +29,7 @@ const {
   dismissRemoteNotice,
   activeNotices
 } = require('./lib/remote-notices')
-const { isProActive, verifyProLicenseKey, canUseTrust, canUseGovern, syncDirectoriesMax, canAddSyncDirectory, effectiveSyncFolders } = require('./lib/license')
+const { isProActive, verifyProLicenseKey, canUseTrust, canUseGovern, canUseFormatFull, syncDirectoriesMax, canAddSyncDirectory, effectiveSyncFolders } = require('./lib/license')
 const { isProductionBuild } = require('./lib/build-profile')
 const { buildEntitlementBarModel } = require('./lib/entitlements')
 const { renderProAdBlock } = require('./lib/pro-ad-block')
@@ -58,6 +58,9 @@ const {
 } = require('./lib/trust-capabilities')
 const { auditNotes, evaluateNoteRules } = require('./lib/govern-rules')
 const { formatGovernReportMarkdown } = require('./lib/govern-report')
+const { formatForIma, rebuildNoteRaw } = require('./lib/format-pipeline')
+const { formatFormatReportMarkdown } = require('./lib/format-report')
+const { parseNoteFile } = require('./lib/utils')
 const {
   getApiKeyExpiryState,
   shouldShowApiKeyExpiryReminder,
@@ -130,6 +133,7 @@ const DEFAULT_SETTINGS = {
   failedQueue: [],
   lastTrustReport: null,
   lastGovernReport: null,
+  lastFormatReport: null,
   trustApiStatus: null,
   trustCapabilities: null,
   trust: {
@@ -148,6 +152,15 @@ const DEFAULT_SETTINGS = {
     minTitleChars: 4,
     autoAuditBeforeBatch: false,
     sensitivePatterns: []
+  },
+  format: {
+    enabled: true,
+    onPush: true,
+    preset: 'core',
+    hashSource: 'local',
+    writeBack: 'off',
+    cjkSpacing: false,
+    headingNormalize: false
   }
 }
 
@@ -260,6 +273,7 @@ class ImaSyncPanelView extends ItemView {
     this.proAdEl = this.root.createDiv({ cls: 'ima-section ima-pro-ad-section' })
     this.trustEl = this.root.createDiv({ cls: 'ima-section ima-trust-section' })
     this.governEl = this.root.createDiv({ cls: 'ima-section ima-govern-section' })
+    this.formatEl = this.root.createDiv({ cls: 'ima-section ima-format-section' })
     this.noteEl = this.root.createDiv({ cls: 'ima-section' })
     this.actionsEl = this.root.createDiv({ cls: 'ima-section' })
     this.logEl = this.root.createDiv({ cls: 'ima-section ima-log' })
@@ -643,6 +657,36 @@ class ImaSyncPanelView extends ItemView {
       .addEventListener('click', () => { void this.plugin.exportLastGovernReport() })
   }
 
+  renderFormatSection () {
+    if (!this.formatEl) return
+    this.formatEl.empty()
+    if (this.plugin.settings.format?.enabled === false) return
+
+    const report = this.plugin.settings.lastFormatReport
+    const hero = this.formatEl.createDiv({ cls: 'ima-format-hero ima-govern-hero' })
+    const head = hero.createDiv({ cls: 'ima-trust-hero-head' })
+    head.createEl('h3', { cls: 'ima-trust-hero-title', text: this.tr('formatHeroTitle') })
+
+    const counts = report?.counts
+    if (counts?.total) {
+      hero.createDiv({
+        cls: 'ima-govern-summary ima-compact',
+        text: this.tr('formatHeroSummary', {
+          formatted: counts.formatted || 0,
+          unchanged: counts.unchanged || 0
+        })
+      })
+    } else {
+      hero.createDiv({ cls: 'ima-muted ima-compact', text: this.tr('formatReportNone') })
+    }
+
+    const row = hero.createDiv({ cls: 'ima-row ima-trust-actions' })
+    row.createEl('button', { text: this.tr('formatPreviewCurrent'), cls: 'ima-btn-secondary' })
+      .addEventListener('click', () => { void this.plugin.previewFormatCurrentNote() })
+    row.createEl('button', { text: this.tr('cmdFormatExport'), cls: 'ima-btn-secondary' })
+      .addEventListener('click', () => { void this.plugin.exportLastFormatReport() })
+  }
+
   renderRequestStats () {
     if (!this.requestStatsEl) return
     const stats = this.plugin.settings.requestStats
@@ -741,6 +785,8 @@ class ImaSyncPanelView extends ItemView {
     if (summary.conflicts) parts.push(`${this.tr('conflicts')} ${summary.conflicts}`)
     if (summary.skipped) parts.push(`${this.tr('skipped')} ${summary.skipped}`)
     if (summary.deduped) parts.push(`${this.tr('trustDeduped')} ${summary.deduped}`)
+    if (summary.formatted) parts.push(`${this.tr('formatFormatted')} ${summary.formatted}`)
+    if (summary.format_unchanged) parts.push(`${this.tr('formatUnchanged')} ${summary.format_unchanged}`)
     if (summary.verified != null && summary.pushed) {
       parts.push(`${this.tr('trustVerified')} ${summary.verified}/${summary.pushed}`)
     }
@@ -1012,36 +1058,39 @@ class ImaSyncPanelView extends ItemView {
     this.remoteNoticeEl = null
 
     const notices = activeNotices(this.plugin.settings, this.plugin.manifest.version)
-    const notice = notices[0]
-    if (!notice) return
+    if (!notices.length) return
 
-    const level = notice.level === 'urgent' || notice.level === 'warn' ? notice.level : 'info'
-    const box = this.statusEl.createDiv({ cls: `ima-remote-notice ima-remote-notice--${level}` })
-    this.remoteNoticeEl = box
-    box.createDiv({ cls: 'ima-remote-notice__title', text: notice.title })
-    box.createEl('p', { cls: 'ima-remote-notice__body', text: notice.body })
-    const actions = box.createDiv({ cls: 'ima-remote-notice__actions' })
-    if (notice.link_url) {
-      const link = actions.createEl('a', {
-        cls: 'ima-remote-notice__link',
-        text: notice.link_label || this.tr('remoteNoticeLink'),
-        href: notice.link_url
-      })
-      link.setAttr('target', '_blank')
-      link.setAttr('rel', 'noopener noreferrer')
-    }
-    if (notice.dismissible !== false) {
-      const btn = actions.createEl('button', {
-        text: this.tr('remoteNoticeDismiss'),
-        cls: 'ima-btn-secondary'
-      })
-      btn.setAttr('type', 'button')
-      btn.addEventListener('click', () => {
-        dismissRemoteNotice(this.plugin.settings, notice.id)
-        void this.plugin.saveData(this.plugin.settings).then(() => {
-          this.renderRemoteNoticeBanner()
+    const wrap = this.statusEl.createDiv({ cls: 'ima-remote-notices' })
+    this.remoteNoticeEl = wrap
+
+    for (const notice of notices) {
+      const level = notice.level === 'urgent' || notice.level === 'warn' ? notice.level : 'info'
+      const box = wrap.createDiv({ cls: `ima-remote-notice ima-remote-notice--${level}` })
+      box.createDiv({ cls: 'ima-remote-notice__title', text: notice.title })
+      box.createEl('p', { cls: 'ima-remote-notice__body', text: notice.body })
+      const actions = box.createDiv({ cls: 'ima-remote-notice__actions' })
+      if (notice.link_url) {
+        const link = actions.createEl('a', {
+          cls: 'ima-remote-notice__link',
+          text: notice.link_label || this.tr('remoteNoticeLink'),
+          href: notice.link_url
         })
-      })
+        link.setAttr('target', '_blank')
+        link.setAttr('rel', 'noopener noreferrer')
+      }
+      if (notice.dismissible !== false) {
+        const btn = actions.createEl('button', {
+          text: this.tr('remoteNoticeDismiss'),
+          cls: 'ima-btn-secondary'
+        })
+        btn.setAttr('type', 'button')
+        btn.addEventListener('click', () => {
+          dismissRemoteNotice(this.plugin.settings, notice.id)
+          void this.plugin.saveData(this.plugin.settings).then(() => {
+            this.renderRemoteNoticeBanner()
+          })
+        })
+      }
     }
   }
 
@@ -1067,6 +1116,7 @@ class ImaSyncPanelView extends ItemView {
     this.renderProAdSection()
     this.renderTrustSection()
     this.renderGovernSection()
+    this.renderFormatSection()
     void this.renderCurrentNote(true)
     const logTitle = this.logEl?.querySelector('.ima-log-title')
     if (logTitle) logTitle.setText(this.tr('log'))
@@ -1140,6 +1190,7 @@ class ImaSyncPanelView extends ItemView {
       this.renderProAdSection()
       this.renderTrustSection()
       this.renderGovernSection()
+      this.renderFormatSection()
     }
     if (wantNote) await this.renderCurrentNote(soft)
     if (wantActions) this.renderActions()
@@ -1617,6 +1668,7 @@ class ImaSyncPanelView extends ItemView {
       }
       if (summary.syncLimit) this.plugin.markSyncLimit(summary.syncLimit)
       this.plugin.storeTrustReport(summary)
+      this.plugin.storeFormatReport(summary)
       void this.plugin.onSyncTelemetry(summary)
       this.scheduleStatsRefresh()
       this.renderTrustSection()
@@ -1652,6 +1704,7 @@ class ImaSyncPanelView extends ItemView {
       const engine = this.getEngine()
       const summary = await engine.runSync(direction)
       this.plugin.storeTrustReport(summary)
+      this.plugin.storeFormatReport(summary)
       const trustNotice = formatTrustBatchNotice(
         this.plugin.settings,
         summary,
@@ -1667,6 +1720,7 @@ class ImaSyncPanelView extends ItemView {
       this.renderProAdSection()
       this.renderTrustSection()
       this.renderGovernSection()
+      this.renderFormatSection()
       await this.refresh({ soft: true, stats: false, note: true, log: false, actions: false })
     } catch (e) {
       const limit = parseImaError(e)
@@ -2233,6 +2287,8 @@ class ImaSyncSettingTab extends PluginSettingTab {
             view.renderProAdSection()
             view.renderTrustSection()
             view.renderGovernSection()
+      view.renderFormatSection()
+            view.renderFormatSection()
           }
         }))
 
@@ -2366,6 +2422,63 @@ class ImaSyncSettingTab extends PluginSettingTab {
               .filter(Boolean)
             await this.plugin.saveSettings()
           }))
+
+      if (!s.format || typeof s.format !== 'object') s.format = { ...DEFAULT_SETTINGS.format }
+
+      new Setting(containerEl)
+        .setName(this.lbl('formatEnabled'))
+        .setDesc(this.tr('formatEnabledDesc'))
+        .addToggle(t => t
+          .setValue(s.format.enabled !== false)
+          .onChange(async (v) => {
+            s.format.enabled = v
+            await this.plugin.saveSettings()
+          }))
+
+      new Setting(containerEl)
+        .setName(this.lbl('formatOnPush'))
+        .addToggle(t => t
+          .setValue(s.format.onPush !== false)
+          .onChange(async (v) => {
+            s.format.onPush = v
+            await this.plugin.saveSettings()
+          }))
+
+      new Setting(containerEl)
+        .setName(this.lbl('formatPreset'))
+        .addDropdown(d => d
+          .addOption('core', this.tr('formatPresetCore'))
+          .addOption('standard', this.tr('formatPresetStandard'))
+          .setValue(s.format.preset || 'core')
+          .onChange(async (v) => {
+            s.format.preset = v
+            await this.plugin.saveSettings()
+          }))
+
+      new Setting(containerEl)
+        .setName(this.lbl('formatHashSource'))
+        .addDropdown(d => d
+          .addOption('local', this.tr('formatHashLocal'))
+          .addOption('formatted', this.tr('formatHashFormatted'))
+          .setValue(s.format.hashSource || 'local')
+          .onChange(async (v) => {
+            s.format.hashSource = v
+            await this.plugin.saveSettings()
+          }))
+
+      if (canUseFormatFull(s)) {
+        new Setting(containerEl)
+          .setName(this.lbl('formatWriteBackSetting'))
+          .setDesc(this.tr('formatWriteBackSettingDesc'))
+          .addDropdown(d => d
+            .addOption('off', 'off')
+            .addOption('confirm', 'confirm')
+            .setValue(s.format.writeBack || 'off')
+            .onChange(async (v) => {
+              s.format.writeBack = v === 'confirm' ? 'confirm' : 'off'
+              await this.plugin.saveSettings()
+            }))
+      }
 
       applySettingTip(
         new Setting(containerEl)
@@ -2821,6 +2934,16 @@ module.exports = class ImaSyncPlugin extends Plugin {
       name: t(this.settings, 'cmdGovernExport'),
       callback: () => { void this.exportLastGovernReport() }
     })
+    this.addCommand({
+      id: 'ima-sync-format-preview',
+      name: t(this.settings, 'cmdFormatPreview'),
+      callback: () => { void this.previewFormatCurrentNote() }
+    })
+    this.addCommand({
+      id: 'ima-sync-format-export',
+      name: t(this.settings, 'cmdFormatExport'),
+      callback: () => { void this.exportLastFormatReport() }
+    })
 
     this.addSettingTab(this._settingTab = new ImaSyncSettingTab(this.app, this))
 
@@ -2935,6 +3058,35 @@ module.exports = class ImaSyncPlugin extends Plugin {
     if (this.settings.trust?.reportAutoSave) {
       void this.exportLastTrustReport({ silent: true })
     }
+  }
+
+  /** @param {object} summary */
+  storeFormatReport (summary) {
+    if (!summary?.formatReport) return
+    this.settings.lastFormatReport = summary.formatReport
+    void this.saveSettings()
+    const view = this.getPanelView()
+    if (view) view.renderFormatSection()
+  }
+
+  /**
+   * @param {import('obsidian').TFile} file
+   * @param {string} formattedBody
+   */
+  async writeBackFormattedNote (file, formattedBody) {
+    if (!canUseFormatFull(this.settings)) {
+      new Notice(t(this.settings, 'formatWriteBackProOnly'))
+      return false
+    }
+    if (this.settings.format?.writeBack !== 'confirm') {
+      new Notice(t(this.settings, 'formatWriteBackProOnly'))
+      return false
+    }
+    const raw = await this.app.vault.read(file)
+    const next = rebuildNoteRaw(raw, formattedBody)
+    await this.app.vault.modify(file, next)
+    new Notice(t(this.settings, 'formatWriteBackDone'))
+    return true
   }
 
   /**
@@ -3059,6 +3211,7 @@ module.exports = class ImaSyncPlugin extends Plugin {
       view.renderProAdSection()
       view.renderTrustSection()
       view.renderGovernSection()
+      view.renderFormatSection()
     }
     return result
   }
@@ -3076,6 +3229,7 @@ module.exports = class ImaSyncPlugin extends Plugin {
       view.renderProAdSection()
       view.renderTrustSection()
       view.renderGovernSection()
+      view.renderFormatSection()
     }
     if (!opts.silent) {
       if (result.ok && (result.mode === 'mock' || result.mode === 'remote')) {
@@ -3113,6 +3267,7 @@ module.exports = class ImaSyncPlugin extends Plugin {
       )
       const summary = await engine.retryFailedPaths(queue)
       this.storeTrustReport(summary)
+      this.storeFormatReport(summary)
       new Notice(t(this.settings, 'pushDone') + this.getPanelView()?.formatSummary(summary))
       if (view) view.scheduleStatsRefresh()
       void this.onSyncTelemetry(summary)
@@ -3186,7 +3341,11 @@ module.exports = class ImaSyncPlugin extends Plugin {
     this.settings.lastGovernReport = report
     await this.saveSettings()
     const view = this.getPanelView()
-    if (view) view.renderGovernSection()
+    if (view) {
+      view.renderGovernSection()
+      view.renderFormatSection()
+      view.renderFormatSection()
+    }
     if (!opts.silent) {
       new Notice(t(this.settings, 'governAuditDone', {
         total: report.total,
@@ -3213,6 +3372,7 @@ module.exports = class ImaSyncPlugin extends Plugin {
     const view = this.getPanelView()
     if (view) {
       view.renderGovernSection()
+      view.renderFormatSection()
       void view.renderCurrentNote(true)
     }
     const item = report.items[0]
@@ -3249,6 +3409,56 @@ module.exports = class ImaSyncPlugin extends Plugin {
       new Notice(String(e?.message || e), 6000)
       return false
     }
+  }
+
+  async exportLastFormatReport () {
+    const report = this.settings.lastFormatReport
+    if (!report?.counts?.total) {
+      new Notice(t(this.settings, 'formatReportNone'))
+      return false
+    }
+    const md = formatFormatReportMarkdown(report, (k, vars) => t(this.settings, k, vars))
+    const stamp = (report.finishedAt || new Date().toISOString()).replace(/[:.]/g, '-').slice(0, 19)
+    const filePath = `_ima-sync/reports/ima-format-report-${stamp}.md`
+    try {
+      const dir = '_ima-sync/reports'
+      if (!this.app.vault.getAbstractFileByPath('_ima-sync')) {
+        await this.app.vault.createFolder('_ima-sync')
+      }
+      if (!this.app.vault.getAbstractFileByPath(dir)) {
+        await this.app.vault.createFolder(dir)
+      }
+      const existing = this.app.vault.getAbstractFileByPath(filePath)
+      if (existing) await this.app.vault.modify(existing, md)
+      else await this.app.vault.create(filePath, md)
+      new Notice(`${t(this.settings, 'cmdFormatExport')}: ${filePath}`)
+      return true
+    } catch (e) {
+      new Notice(String(e?.message || e), 6000)
+      return false
+    }
+  }
+
+  async previewFormatCurrentNote () {
+    const file = this.app.workspace.getActiveFile()
+    if (!file || file.extension !== 'md') {
+      new Notice(t(this.settings, 'openNoteFirst'))
+      return
+    }
+    const raw = await this.app.vault.read(file)
+    const { frontmatter, body } = parseNoteFile(raw)
+    const title = frontmatter.title || file.basename
+    const result = formatForIma({ path: file.path, title, body, frontmatter }, this.settings)
+    if (result.unchanged || !result.rulesApplied?.length) {
+      new Notice(t(this.settings, 'formatPreviewEmpty'))
+      return
+    }
+    new FormatPreviewModal(this.app, this, file, {
+      title: file.basename,
+      before: body,
+      after: result.body,
+      rules: result.rulesApplied
+    }).open()
   }
 
   async verifyCurrentNote () {
@@ -3355,6 +3565,7 @@ module.exports = class ImaSyncPlugin extends Plugin {
     this.normalizeTelemetrySettings()
     this.normalizeStatsCacheSnapshot()
     this.normalizeTrustSettings()
+    this.normalizeFormatSettings()
     this.normalizeApiKeyExpirySettings()
     this.syncConnectionMode()
   }
@@ -3378,6 +3589,22 @@ module.exports = class ImaSyncPlugin extends Plugin {
     s.failedQueue = normalizeFailedQueue(s)
     if (s.lastTrustReport && typeof s.lastTrustReport !== 'object') {
       s.lastTrustReport = null
+    }
+  }
+
+  normalizeFormatSettings () {
+    const s = this.settings
+    if (!s.format || typeof s.format !== 'object') {
+      s.format = { ...DEFAULT_SETTINGS.format }
+    }
+    const preset = String(s.format.preset || 'core')
+    if (!['core', 'standard', 'minimal', 'custom'].includes(preset)) {
+      s.format.preset = 'core'
+    }
+    if (s.format.hashSource !== 'formatted') s.format.hashSource = 'local'
+    if (s.format.writeBack !== 'confirm') s.format.writeBack = 'off'
+    if (s.lastFormatReport && typeof s.lastFormatReport !== 'object') {
+      s.lastFormatReport = null
     }
   }
 
@@ -3439,12 +3666,8 @@ module.exports = class ImaSyncPlugin extends Plugin {
     this.settings.telemetryPromptShown = true
     void this.saveData(this.settings)
     if (this.settings.telemetryEnabled) return
-    const { resolveLang } = require('./lib/i18n')
-    const lang = resolveLang(this.settings)
-    const msg = lang === 'en'
-      ? 'Anonymous usage stats are off by default. Enable in Settings → Advanced, or via Feedback.'
-      : '匿名使用统计默认关闭。可在「设置 → 高级」或「反馈」中开启。'
-    new Notice(msg, 6000)
+    const { t, resolveLang } = require('./lib/i18n')
+    new Notice(t(this.settings, 'telemetryOptInNotice'), 7000)
   }
 
   /** @param {object} summary */
@@ -3793,6 +4016,7 @@ module.exports = class ImaSyncPlugin extends Plugin {
       const engine = this.createEngine(onLog, onProgress)
       const summary = await engine.runSync(direction)
       this.storeTrustReport(summary)
+      this.storeFormatReport(summary)
       if (!silent) {
         const parts = []
         if (summary.stopped) parts.push(t(this.settings, 'syncStopped'))
@@ -3898,6 +4122,7 @@ module.exports = class ImaSyncPlugin extends Plugin {
         new Notice(title + (viewRef ? viewRef.formatSummary(summary) : ''))
       }
       this.storeTrustReport(summary)
+      this.storeFormatReport(summary)
       void this.onSyncTelemetry(summary)
       if (view) view.scheduleStatsRefresh()
     } catch (e) {
@@ -3954,5 +4179,54 @@ module.exports = class ImaSyncPlugin extends Plugin {
     } finally {
       this.endSyncRun()
     }
+  }
+}
+
+class FormatPreviewModal extends Modal {
+  /**
+   * @param {import('obsidian').App} app
+   * @param {import('./main').default} plugin
+   * @param {import('obsidian').TFile} file
+   * @param {{ title: string, before: string, after: string, rules: string[] }} data
+   */
+  constructor (app, plugin, file, data) {
+    super(app)
+    this.plugin = plugin
+    this.settings = plugin.settings
+    this.file = file
+    this.data = data
+  }
+
+  onOpen () {
+    const { contentEl } = this
+    contentEl.empty()
+    contentEl.addClass('ima-format-preview-modal')
+    const tr = (k, v) => t(this.settings, k, v)
+    contentEl.createEl('h2', { text: tr('formatPreviewTitle') })
+    contentEl.createEl('p', { cls: 'ima-muted', text: `${this.data.title} · ${tr('formatPreviewRules')}: ${this.data.rules.join(', ')}` })
+    const grid = contentEl.createDiv({ cls: 'ima-format-preview-grid' })
+    const colA = grid.createDiv({ cls: 'ima-format-preview-col' })
+    colA.createEl('h3', { text: tr('formatPreviewBefore') })
+    colA.createEl('pre', { text: this.data.before.slice(0, 8000) })
+    const colB = grid.createDiv({ cls: 'ima-format-preview-col' })
+    colB.createEl('h3', { text: tr('formatPreviewAfter') })
+    colB.createEl('pre', { text: this.data.after.slice(0, 8000) })
+
+    const actions = contentEl.createDiv({ cls: 'ima-row ima-format-preview-actions' })
+    const canWriteBack = canUseFormatFull(this.settings) && this.settings.format?.writeBack === 'confirm'
+    if (canWriteBack) {
+      actions.createEl('button', { text: tr('formatWriteBack'), cls: 'mod-cta' })
+        .addEventListener('click', () => {
+          const ok = window.confirm(tr('formatWriteBackConfirm'))
+          if (!ok) return
+          void this.plugin.writeBackFormattedNote(this.file, this.data.after).then((done) => {
+            if (done) this.close()
+          })
+        })
+    }
+  }
+
+  onClose () {
+    this.contentEl.empty()
   }
 }

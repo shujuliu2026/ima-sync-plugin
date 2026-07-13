@@ -84,13 +84,15 @@ Optional Alipay sponsor QR loads from the configured site host — voluntary sup
 
 ## Privacy
 
-Anonymous telemetry (version, active days, success rate, error counts) is **on by default**. **Never** uploads API keys, note paths, or body text. Turn off in **Feedback & improve** if you prefer.
+Anonymous telemetry (version, active days, success rate, error counts) is **off by default**. **Never** uploads API keys, note paths, or body text. Enable in **Feedback & improve** if you wish.
+
+**Exception**: first enable sends one `ima.install` ping (plugin version and coarse region for install counts), regardless of the telemetry toggle.
 
 ---
 
 ## Feedback
 
-Sidebar **Feedback & improve**: local diagnostics summary, copy diagnostics, telemetry toggle (on by default).
+Sidebar **Feedback & improve**: local diagnostics summary, copy diagnostics, telemetry toggle (off by default).
 
 ---
 

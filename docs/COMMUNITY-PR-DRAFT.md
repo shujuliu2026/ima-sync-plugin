@@ -1,14 +1,13 @@
-# Obsidian Community Plugins · PR Draft
+# Obsidian Community Plugins · 提交说明草稿
 
 > **Plugin repo**: https://github.com/shujuliu2026/ima-sync-plugin  
-> **Target**: [obsidianmd/obsidian-releases](https://github.com/obsidianmd/obsidian-releases)  
-> **Date**: 2026-07-12
+> **提交入口（2026）**: [community.obsidian.md](https://community.obsidian.md) → Plugins → New plugin  
+> **Release 目标**: `v1.5.44`  
+> **Date**: 2026-07-13
 
 ---
 
-## 1. `community-plugins.json` entry
-
-Add alphabetically by `id` (after `image-*`, before `im-*` or as appropriate):
+## 1. `community-plugins.json` 参考条目（目录已迁移，仅作文案参考）
 
 ```json
 {
@@ -22,15 +21,15 @@ Add alphabetically by `id` (after `image-*`, before `im-*` or as appropriate):
 
 ---
 
-## 2. PR title
+## 2. 提交标题（若表单需要）
 
 ```text
-Add plugin: IMA Sync
+IMA Sync — Obsidian to Tencent IMA knowledge base
 ```
 
 ---
 
-## 3. PR body (copy-paste)
+## 3. 审核说明正文（复制粘贴）
 
 ```markdown
 # IMA Sync
@@ -41,11 +40,12 @@ Add plugin: IMA Sync
 - Incremental sync using content hashes; rate-limit friendly (configurable gaps, batch pauses, 429 backoff).
 - **Desktop only** (`isDesktopOnly: true`).
 - UI languages: Auto / 中文 / English.
+- Optional Pro modules (license-gated): Trust verification, Govern audit, Format pre-push normalization — **core push remains free**.
 
 ## Repository
 
 - https://github.com/shujuliu2026/ima-sync-plugin
-- Latest release: https://github.com/shujuliu2026/ima-sync-plugin/releases/latest
+- Latest release: https://github.com/shujuliu2026/ima-sync-plugin/releases/tag/v1.5.44
 - README: https://github.com/shujuliu2026/ima-sync-plugin/blob/main/README.en.md
 
 ## Third-party services
@@ -75,7 +75,7 @@ Pull-from-cloud / full bidirectional sync are **hidden by default** and marked e
 ## Checklist
 
 - [x] I have read the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- [x] I have self-tested the latest release (119 automated tests + manual Obsidian smoke).
+- [x] I have self-tested the latest release (230 automated tests + 14 stress tests + manual Obsidian smoke).
 - [x] My plugin does not embed external scripts in note content.
 - [x] Repository is public; release contains `main.js`, `manifest.json`, `styles.css`, `versions.json`.
 - [x] `manifest.json` description is in English.
@@ -99,11 +99,12 @@ Pull-from-cloud / full bidirectional sync are **hidden by default** and marked e
 
 | Item | Action |
 |------|--------|
-| Public repo live | Push `main` to GitHub |
-| Release `v1.5.38` | Contains main.js, manifest.json, styles.css, versions.json |
-| Screenshots | Add to PR body |
-| Fork obsidian-releases | Edit `community-plugins.json` only |
-| BRAT smoke test | Optional beta before community merge |
+| Public repo live | ✅ `shujuliu2026/ima-sync-plugin` |
+| Release **v1.5.44** | ⬜ push tag → CI 上传 main.js, manifest.json, styles.css, versions.json |
+| Default branch manifest | ⬜ HEAD `version` = `1.5.44` |
+| Screenshots | ⬜ 1～2 张 PNG |
+| community.obsidian.md | ⬜ 绑定 GitHub → New plugin → 填 repo URL |
+| BRAT smoke test | 可选：上架前给内测者 |
 
 ---
 

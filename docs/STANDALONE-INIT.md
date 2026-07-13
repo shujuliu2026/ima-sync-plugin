@@ -5,7 +5,7 @@
 ## 1. 初始化 git
 
 ```bash
-cd ima-sync-plugin
+cd ima-sync-export-v1544
 git init
 npm ci
 npm run pregate

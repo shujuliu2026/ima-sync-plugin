@@ -1097,8 +1097,15 @@
   color: var(--color-red);
 }
 
-.ima-remote-notice {
+.ima-remote-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 8px;
+}
+
+.ima-remote-notice {
+  margin-top: 0;
   padding: 10px 10px 8px;
   border-radius: 8px;
   border: 1px solid #e8dfd0;
@@ -1738,4 +1745,32 @@
 .ima-badge.verify-pending {
   color: var(--color-orange);
   background: rgba(255, 140, 60, 0.15);
+}
+
+.ima-format-preview-modal .ima-format-preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.ima-format-preview-modal pre {
+  max-height: 420px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  padding: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+}
+
+.ima-format-section .ima-format-hero {
+  margin-top: 4px;
+}
+
+.ima-format-preview-actions {
+  margin-top: 12px;
+  justify-content: flex-end;
+  gap: 8px;
 }

@@ -8,14 +8,14 @@
 import path from 'path'
 import { createRequire } from 'module'
 import { getPaths } from './_paths.mjs'
+import { parseTestFlags, stressScale } from './_test-flags.mjs'
 
 const { pluginRoot: PLUGIN } = getPaths()
+const { quick } = parseTestFlags()
+const { noteCount: NOTE_COUNT, bodyKb: BODY_KB, pushCount: PUSH_COUNT } = stressScale()
+const tStart = Date.now()
 const require = createRequire(import.meta.url)
 const Module = require('module')
-
-const NOTE_COUNT = Math.max(100, Number(process.env.IMA_STRESS_NOTES) || 2000)
-const BODY_KB = Math.max(16, Number(process.env.IMA_STRESS_BODY_KB) || 128)
-const PUSH_COUNT = Math.min(NOTE_COUNT, Math.max(50, Number(process.env.IMA_STRESS_PUSH) || 120))
 
 const moduleLoad = Module._load
 Module._load = function (request, parent, isMain) {
@@ -118,7 +118,7 @@ function createMockApp (count, folder) {
 }
 
 console.log('\n=== ima-sync 压力自测 ===')
-console.log(`  规模: notes=${NOTE_COUNT} bodyKb=${BODY_KB} push=${PUSH_COUNT}\n`)
+console.log(`  规模: notes=${NOTE_COUNT} bodyKb=${BODY_KB} push=${PUSH_COUNT}${quick ? ' · quick' : ''}\n`)
 
 // ST-CHUNK: 大正文分块
 {
@@ -192,7 +192,7 @@ console.log(`  规模: notes=${NOTE_COUNT} bodyKb=${BODY_KB} push=${PUSH_COUNT}\
   }
   ctrl.pause()
   const pauseProbe = ctrl.gate()
-  await new Promise(r => setTimeout(r, 200))
+  await new Promise(r => setImmediate(r))
   assert('ST-CTL-01', ctrl.paused && gates === 1500, `暂停前 gate=${gates}`)
   ctrl.resume()
   const okAfterResume = await pauseProbe
@@ -226,4 +226,6 @@ if (failed.length) {
   for (const f of failed) console.log(`  ${f.id}: ${f.note}`)
   process.exit(1)
 }
-console.log('\n压力自测 PASS · 可执行 bundle/install\n')
+console.log('\n压力自测 PASS · 可执行 bundle/install')
+const elapsed = ((Date.now() - tStart) / 1000).toFixed(1)
+console.log(`耗时 ${elapsed}s${quick ? ' · quick' : ''}\n`)

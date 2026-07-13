@@ -1,14 +1,17 @@
 {
   "name": "ima-sync-plugin",
-  "version": "1.5.42",
+  "version": "1.5.44",
   "description": "Obsidian → Tencent IMA knowledge base sync plugin",
   "private": false,
   "scripts": {
     "bundle": "node scripts/bundle.mjs",
     "sync-versions": "node scripts/sync-versions.mjs",
     "selftest": "node scripts/selftest.mjs",
+    "selftest:quick": "node scripts/selftest.mjs --quick",
     "stresstest": "node scripts/stresstest.mjs",
+    "stresstest:quick": "node scripts/stresstest.mjs --quick",
     "pregate": "npm run selftest && npm run stresstest",
+    "pregate:quick": "npm run selftest:quick && npm run stresstest:quick",
     "install-plugin": "node scripts/install.mjs"
   },
   "devDependencies": {
