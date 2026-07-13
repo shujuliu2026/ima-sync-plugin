@@ -1,0 +1,12 @@
+{
+  "id": "ima-sync",
+  "name": "IMA Sync",
+  "version": "1.5.41",
+  "minAppVersion": "1.4.0",
+  "description": "Push Obsidian notes to Tencent IMA knowledge base with incremental sync, attachments, and rate-limit handling.",
+  "author": "shujuliu",
+  "authorUrl": "https://www.linyilu.com",
+  "isDesktopOnly": true,
+  "main": "main.js",
+  "styles": ["styles.css"]
+}

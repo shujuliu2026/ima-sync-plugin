@@ -1,0 +1,46 @@
+# IMA Sync · GitHub Release（tag 触发）
+# Phase 3 · 产出社区/BRAT 安装三件套 + versions.json
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm run pregate
+        run: npm run pregate
+
+      - name: npm run bundle
+        run: npm run bundle
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          cp dist/main.js dist/manifest.json dist/styles.css dist/versions.json release-assets/
+          cd dist && zip -r ../release-assets/ima-sync-${{ github.ref_name }}.zip main.js manifest.json styles.css versions.json
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true

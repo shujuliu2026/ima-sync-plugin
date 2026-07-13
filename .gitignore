@@ -1,0 +1,6 @@
+node_modules/
+dist/
+main.bundled.js
+.obsidian/
+*.log
+.DS_Store

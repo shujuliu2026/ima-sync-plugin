@@ -1,0 +1,43 @@
+{
+  "$schema": "../schemas/product-manifest.schema.json",
+  "productId": "ima-sync-test",
+  "productName": {
+    "zh": "测试 IMA 同步",
+    "en": "Test IMA Sync"
+  },
+  "brand": {
+    "name": {
+      "zh": "示例品牌",
+      "en": "Example Brand"
+    },
+    "siteHost": "plugin.example.com",
+    "siteBaseUrl": "https://plugin.example.com",
+    "siteTitle": {
+      "zh": "示例站 · plugin.example.com",
+      "en": "Example Site · plugin.example.com"
+    },
+    "wechatAccount": "",
+    "authorName": "Test Author",
+    "authorEmail": "test@example.com",
+    "aboutDesc": {
+      "zh": "白标测试描述",
+      "en": "White-label test description"
+    },
+    "copyrightHolder": "Test Author",
+    "copyrightYear": 2026
+  },
+  "distribution": {
+    "downloadPath": "/downloads/ima-sync",
+    "sponsorAssetPath": "/downloads/ima-sync/assets",
+    "sponsorProtocolOrder": ["https", "http"]
+  },
+  "analytics": {
+    "defaultEventsUrl": "https://plugin.example.com/analytics/events",
+    "clientChannel": "ima-sync-test",
+    "optional": true
+  },
+  "license": {
+    "model": "personal-free",
+    "commercialRequiresWrittenPermission": true
+  }
+}

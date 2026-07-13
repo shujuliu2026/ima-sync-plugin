@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ima-sync.local/schemas/Entitlements.v1.schema.json",
+  "title": "IMA Sync Entitlements",
+  "description": "IMA Sync · 云授权权益下发（product=ima-sync）",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "product",
+    "account_id",
+    "tier",
+    "valid_until",
+    "modules",
+    "limits",
+    "signature",
+    "issued_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "product": { "type": "string", "const": "ima-sync" },
+    "account_id": { "type": "string", "minLength": 1 },
+    "tier": {
+      "type": "string",
+      "enum": ["free", "ima-pro", "ima-pro-team", "ima-enterprise"]
+    },
+    "valid_until": { "type": "string", "format": "date-time" },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "core.free",
+          "mod.trust",
+          "mod.govern",
+          "mod.govern.llm",
+          "mod.structure",
+          "mod.whitelabel",
+          "mod.analytics.private"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "limits": {
+      "type": "object",
+      "required": ["seats", "offline_grace_days"],
+      "properties": {
+        "seats": { "type": "integer", "minimum": 0 },
+        "offline_grace_days": { "type": "integer", "minimum": 0, "default": 7 },
+        "trust_verify_enabled": { "type": "boolean", "default": true },
+        "trust_dedup_enabled": { "type": "boolean", "default": true },
+        "govern_llm_enabled": { "type": "boolean", "default": false },
+        "govern_llm_tokens_month": { "type": "integer", "minimum": 0, "default": 0 },
+        "structure_folders_max": { "type": "integer", "minimum": 0, "default": 0 },
+        "sync_directories_max": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1,
+          "description": "同步目录上限；0=不限"
+        },
+        "white_label": { "type": "boolean", "default": false },
+        "priority_support": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    },
+    "signature": {
+      "type": "string",
+      "description": "Ed25519 对 canonical JSON（不含 signature）的 base64 签名"
+    },
+    "issued_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

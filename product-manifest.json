@@ -1,0 +1,65 @@
+{
+  "$schema": "./schemas/product-manifest.schema.json",
+  "productId": "ima-sync",
+  "productName": {
+    "zh": "IMA 同步",
+    "en": "IMA Sync"
+  },
+  "brand": {
+    "name": {
+      "zh": "临忆录",
+      "en": "Linyilu"
+    },
+    "siteHost": "www.linyilu.com",
+    "siteBaseUrl": "https://www.linyilu.com",
+    "siteTitle": {
+      "zh": "临忆录 琅琊时空 · www.linyilu.com",
+      "en": "Linyilu Langya Timeline · www.linyilu.com"
+    },
+    "wechatAccount": "临忆录",
+    "authorName": "shujuliu",
+    "authorEmail": "shujuliu@foxmail.com",
+    "aboutDesc": {
+      "zh": "本插件是为制作《临忆录 琅琊时空》网站时的衍生品，网站为记录临沂城市历史变迁搭建的平台，欢迎访问互相学习。",
+      "en": "Companion plugin for the Linyilu Langya Timeline project — a platform documenting urban history. Visit the site to learn more."
+    },
+    "copyrightHolder": "shujuliu",
+    "copyrightYear": 2026
+  },
+  "distribution": {
+    "downloadPath": "/downloads/ima-sync",
+    "learnMorePath": "/tools/ima-sync",
+    "sponsorAssetPath": "/downloads/ima-sync/assets",
+    "sponsorProtocolOrder": ["https", "http"],
+    "githubRepo": "shujuliu/ima-sync-plugin",
+    "releaseAssetPattern": "ima-sync-v{version}.zip",
+    "brat": {
+      "repoUrl": "https://github.com/shujuliu/ima-sync-plugin"
+    }
+  },
+  "analytics": {
+    "defaultEventsUrl": "https://www.linyilu.com/analytics/events",
+    "clientChannel": "ima-sync",
+    "tenantId": "linyilu-default",
+    "optional": true
+  },
+  "license": {
+    "model": "personal-free",
+    "commercialRequiresWrittenPermission": true,
+    "entitlementsPublicKey": "MCowBQYDK2VwAyEAolVfkoT1x2DW51K+d//m/d6BlOTs8jvo3nRvmUCYWvI=",
+    "cloud": {
+      "apiBasePath": "/api/v1/ima-sync/license",
+      "activatePath": "/activate",
+      "entitlementsPath": "/entitlements",
+      "refreshIntervalHours": 24
+    },
+    "proTier": {
+      "planned": true,
+      "locksCoreFeatures": false,
+      "benefits": {
+        "zh": ["推送可检索验证", "智能去重", "同步报告与失败队列", "多同步目录", "优先支持"],
+        "en": ["Post-push search verification", "Smart dedup", "Sync reports & retry queue", "Multiple sync folders", "Priority support"]
+      }
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ima-sync.local/schemas/product-manifest.schema.json",
+  "title": "IMA Sync Product Manifest",
+  "type": "object",
+  "required": ["productId", "brand", "distribution", "analytics"],
+  "properties": {
+    "productId": { "type": "string", "minLength": 1 },
+    "productName": {
+      "type": "object",
+      "properties": {
+        "zh": { "type": "string" },
+        "en": { "type": "string" }
+      }
+    },
+    "brand": {
+      "type": "object",
+      "required": ["siteHost", "siteBaseUrl"],
+      "properties": {
+        "name": { "type": "object" },
+        "siteHost": { "type": "string", "minLength": 1 },
+        "siteBaseUrl": { "type": "string", "format": "uri" },
+        "siteTitle": {
+          "type": "object",
+          "properties": {
+            "zh": { "type": "string" },
+            "en": { "type": "string" }
+          }
+        },
+        "wechatAccount": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorEmail": { "type": "string", "format": "email" },
+        "aboutDesc": {
+          "type": "object",
+          "properties": {
+            "zh": { "type": "string" },
+            "en": { "type": "string" }
+          }
+        },
+        "copyrightHolder": { "type": "string" },
+        "copyrightYear": { "type": "integer" }
+      }
+    },
+    "distribution": {
+      "type": "object",
+      "required": ["sponsorAssetPath", "sponsorProtocolOrder"],
+      "properties": {
+        "downloadPath": { "type": "string" },
+        "learnMorePath": { "type": "string" },
+        "sponsorAssetPath": { "type": "string", "minLength": 1 },
+        "sponsorProtocolOrder": {
+          "type": "array",
+          "items": { "enum": ["https", "http"] },
+          "minItems": 1
+        },
+        "githubRepo": { "type": "string" },
+        "releaseAssetPattern": { "type": "string" },
+        "brat": {
+          "type": "object",
+          "properties": {
+            "repoUrl": { "type": "string", "format": "uri" }
+          }
+        }
+      }
+    },
+    "analytics": {
+      "type": "object",
+      "required": ["defaultEventsUrl", "clientChannel"],
+      "properties": {
+        "defaultEventsUrl": { "type": "string", "format": "uri" },
+        "clientChannel": { "type": "string", "minLength": 1 },
+        "tenantId": { "type": "string" },
+        "optional": { "type": "boolean" }
+      }
+    },
+    "license": {
+      "type": "object",
+      "properties": {
+        "model": { "type": "string" },
+        "commercialRequiresWrittenPermission": { "type": "boolean" },
+        "proTier": {
+          "type": "object",
+          "properties": {
+            "planned": { "type": "boolean" },
+            "locksCoreFeatures": { "type": "boolean" },
+            "benefits": { "type": "object" }
+          }
+        },
+        "cloud": {
+          "type": "object",
+          "properties": {
+            "apiBasePath": { "type": "string" },
+            "activatePath": { "type": "string" },
+            "entitlementsPath": { "type": "string" },
+            "refreshIntervalHours": { "type": "number" }
+          }
+        }
+      }
+    }
+  }
+}
