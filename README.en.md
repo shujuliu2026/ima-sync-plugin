@@ -13,7 +13,7 @@ No CMS or website backend required — connects directly to the IMA OpenAPI usin
 
 ### Option A · GitHub Releases (recommended for beta)
 
-1. Download `ima-sync-v*.zip` from [Releases](https://github.com/shujuliu/ima-sync-plugin/releases).
+1. Download `ima-sync-v*.zip` from [Releases](https://github.com/shujuliu2026/ima-sync-plugin/releases).
 2. Extract into `<vault>/.obsidian/plugins/ima-sync/` (`main.js`, `manifest.json`, `styles.css` required).
 3. Enable **Settings → Community plugins → IMA Sync**, then reload Obsidian (Ctrl+R).
 

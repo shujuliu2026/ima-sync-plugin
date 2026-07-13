@@ -31,10 +31,10 @@
     "learnMorePath": "/tools/ima-sync",
     "sponsorAssetPath": "/downloads/ima-sync/assets",
     "sponsorProtocolOrder": ["https", "http"],
-    "githubRepo": "shujuliu/ima-sync-plugin",
+    "githubRepo": "shujuliu2026/ima-sync-plugin",
     "releaseAssetPattern": "ima-sync-v{version}.zip",
     "brat": {
-      "repoUrl": "https://github.com/shujuliu/ima-sync-plugin"
+      "repoUrl": "https://github.com/shujuliu2026/ima-sync-plugin"
     }
   },
   "analytics": {

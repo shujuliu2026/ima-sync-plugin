@@ -1,6 +1,6 @@
 # Obsidian Community Plugins · PR Draft
 
-> **Plugin repo**: https://github.com/shujuliu/ima-sync-plugin  
+> **Plugin repo**: https://github.com/shujuliu2026/ima-sync-plugin  
 > **Target**: [obsidianmd/obsidian-releases](https://github.com/obsidianmd/obsidian-releases)  
 > **Date**: 2026-07-12
 
@@ -16,7 +16,7 @@ Add alphabetically by `id` (after `image-*`, before `im-*` or as appropriate):
   "name": "IMA Sync",
   "author": "shujuliu",
   "description": "Push Obsidian notes to Tencent IMA knowledge base with incremental sync, attachments, and rate-limit handling.",
-  "repo": "shujuliu/ima-sync-plugin"
+  "repo": "shujuliu2026/ima-sync-plugin"
 }
 ```
 
@@ -44,9 +44,9 @@ Add plugin: IMA Sync
 
 ## Repository
 
-- https://github.com/shujuliu/ima-sync-plugin
-- Latest release: https://github.com/shujuliu/ima-sync-plugin/releases/latest
-- README: https://github.com/shujuliu/ima-sync-plugin/blob/main/README.en.md
+- https://github.com/shujuliu2026/ima-sync-plugin
+- Latest release: https://github.com/shujuliu2026/ima-sync-plugin/releases/latest
+- README: https://github.com/shujuliu2026/ima-sync-plugin/blob/main/README.en.md
 
 ## Third-party services
 

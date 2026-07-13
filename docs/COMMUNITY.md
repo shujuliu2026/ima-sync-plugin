@@ -42,7 +42,7 @@
   "name": "IMA Sync",
   "author": "shujuliu",
   "description": "Push Obsidian notes to Tencent IMA knowledge base with incremental sync and attachments.",
-  "repo": "shujuliu/ima-sync-plugin"
+  "repo": "shujuliu2026/ima-sync-plugin"
 }
 ```
 
