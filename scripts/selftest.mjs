@@ -532,13 +532,9 @@ const { formatProCloudError } = require(path.join(PLUGIN, 'lib/license-cloud.js'
 assert('TC-CLD-05', formatProCloudError({ language: 'zh' }, { error: 'seat_limit' }).includes('席位'), '云端席位错误文案')
 
 const crypto = require('crypto')
-const { verifyEntitlementsSignature, entitlementsSignBytes } = require(path.join(PLUGIN, 'lib/license-sign.js'))
+const { verifyEntitlementsEd25519, entitlementsSignBytes } = require(path.join(PLUGIN, 'lib/license-sign.js'))
 const { normalizeEntitlementsPayload } = require(path.join(PLUGIN, 'lib/license-cloud.js'))
-const edPriv = crypto.createPrivateKey({
-  key: Buffer.from('MC4CAQAwBQYDK2VwBCIEIPK+S9ZWwsmd2tA9dv4O5Dq2T2szLLpnmBfduTbKpVRT', 'base64'),
-  format: 'der',
-  type: 'pkcs8'
-})
+const { ENTITLEMENTS_PUBLIC_KEY_B64 } = require(path.join(PLUGIN, 'lib/license-sign-pubkey.js'))
 const edEnt = {
   schema_version: 1,
   product: 'ima-sync',
@@ -561,13 +557,33 @@ const edEnt = {
   issued_at: '2026-01-01T00:00:00.000Z',
   signature: ''
 }
+const { publicKey: edPub, privateKey: edPriv } = crypto.generateKeyPairSync('ed25519')
 const edSig = crypto.sign(null, entitlementsSignBytes(edEnt), edPriv)
 edEnt.signature = `ed25519:${edSig.toString('base64')}`
-assert(
-  'TC-CLD-06',
-  verifyEntitlementsSignature(edEnt) && normalizeEntitlementsPayload(edEnt).ok,
-  'Ed25519 插件验签'
-)
+assert('TC-CLD-06', verifyEntitlementsEd25519(edEnt, edPub), 'Ed25519 插件验签 round-trip')
+
+const prodPrivB64 = String(process.env.IMA_SYNC_LICENSE_SIGN_PRIVATE_KEY || '').trim()
+if (prodPrivB64 && ENTITLEMENTS_PUBLIC_KEY_B64) {
+  const prodPriv = crypto.createPrivateKey({
+    key: Buffer.from(prodPrivB64, 'base64'),
+    format: 'der',
+    type: 'pkcs8'
+  })
+  const prodPub = crypto.createPublicKey({
+    key: Buffer.from(ENTITLEMENTS_PUBLIC_KEY_B64, 'base64'),
+    format: 'der',
+    type: 'spki'
+  })
+  const prodEnt = { ...edEnt, account_id: 'acc:prod-key-test', signature: '' }
+  prodEnt.signature = `ed25519:${crypto.sign(null, entitlementsSignBytes(prodEnt), prodPriv).toString('base64')}`
+  assert(
+    'TC-CLD-07',
+    verifyEntitlementsEd25519(prodEnt, prodPub) && normalizeEntitlementsPayload(prodEnt).ok,
+    '生产公钥与 env 私钥验签'
+  )
+} else {
+  assert('TC-CLD-07', true, '生产密钥验签 SKIP（无 IMA_SYNC_LICENSE_SIGN_PRIVATE_KEY）')
+}
 
 const freeEnt = getEffectiveEntitlements({ mockPro: false, proLicenseKey: '' })
 assert('TC-ENT-01', freeEnt.tier === TIER_FREE && hasModule({ mockPro: false }, MODULE_CORE_FREE) && !hasModule({ mockPro: false }, MODULE_TRUST), 'Free 仅 core.free')

@@ -30,7 +30,10 @@
     "downloadPath": "/downloads/ima-sync",
     "learnMorePath": "/tools/ima-sync",
     "sponsorAssetPath": "/downloads/ima-sync/assets",
-    "sponsorProtocolOrder": ["https", "http"],
+    "sponsorProtocolOrder": [
+      "https",
+      "http"
+    ],
     "githubRepo": "shujuliu2026/ima-sync-plugin",
     "releaseAssetPattern": "ima-sync-v{version}.zip",
     "brat": {
@@ -46,7 +49,7 @@
   "license": {
     "model": "personal-free",
     "commercialRequiresWrittenPermission": true,
-    "entitlementsPublicKey": "MCowBQYDK2VwAyEAolVfkoT1x2DW51K+d//m/d6BlOTs8jvo3nRvmUCYWvI=",
+    "entitlementsPublicKey": "MCowBQYDK2VwAyEAfGZaAcbNARDeTc1k8eGkF9nUS16GYHZXN29TKhuOYLY=",
     "cloud": {
       "apiBasePath": "/api/v1/ima-sync/license",
       "activatePath": "/activate",
@@ -57,8 +60,20 @@
       "planned": true,
       "locksCoreFeatures": false,
       "benefits": {
-        "zh": ["推送可检索验证", "智能去重", "同步报告与失败队列", "多同步目录", "优先支持"],
-        "en": ["Post-push search verification", "Smart dedup", "Sync reports & retry queue", "Multiple sync folders", "Priority support"]
+        "zh": [
+          "推送可检索验证",
+          "智能去重",
+          "同步报告与失败队列",
+          "多同步目录",
+          "优先支持"
+        ],
+        "en": [
+          "Post-push search verification",
+          "Smart dedup",
+          "Sync reports & retry queue",
+          "Multiple sync folders",
+          "Priority support"
+        ]
       }
     }
   }

@@ -1,6 +1,6 @@
 {
   "name": "ima-sync-plugin",
-  "version": "1.5.41",
+  "version": "1.5.42",
   "description": "Obsidian → Tencent IMA knowledge base sync plugin",
   "private": false,
   "scripts": {
