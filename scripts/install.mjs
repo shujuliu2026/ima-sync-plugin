@@ -50,7 +50,16 @@ if (!bundle(pluginRoot)) process.exit(1)
 const obsidianDir = path.join(vault, '.obsidian')
 const destDir = path.join(obsidianDir, 'plugins', PLUGIN_ID)
 
+/** 保留用户设置，避免重装时丢掉 data.json */
+const preserveNames = new Set(['data.json'])
+const preserved = new Map()
 if (fs.existsSync(destDir)) {
+  for (const name of preserveNames) {
+    const p = path.join(destDir, name)
+    if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+      preserved.set(name, fs.readFileSync(p))
+    }
+  }
   fs.rmSync(destDir, { recursive: true, force: true })
 }
 fs.mkdirSync(destDir, { recursive: true })
@@ -63,6 +72,11 @@ for (const name of installFiles) {
     process.exit(1)
   }
   fs.copyFileSync(src, path.join(destDir, name))
+}
+
+for (const [name, buf] of preserved) {
+  fs.writeFileSync(path.join(destDir, name), buf)
+  console.log(`[ima-sync:install] 已保留 ${name}`)
 }
 
 const readme = path.join(distDir, 'README.md')
@@ -99,5 +113,26 @@ if (!enabled.includes(PLUGIN_ID)) {
 console.log('[ima-sync:install] 已安装（单文件 bundle）')
 console.log(`  plugin → ${destDir}`)
 console.log(`  root   → ${pluginRoot}`)
+
+const pluginsRoot = path.join(obsidianDir, 'plugins')
+if (fs.existsSync(pluginsRoot)) {
+  const dups = fs.readdirSync(pluginsRoot, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && e.name !== PLUGIN_ID)
+    .filter((e) => {
+      try {
+        const m = JSON.parse(fs.readFileSync(path.join(pluginsRoot, e.name, 'manifest.json'), 'utf8'))
+        return m?.id === PLUGIN_ID
+      } catch {
+        return false
+      }
+    })
+    .map((e) => e.name)
+  if (dups.length) {
+    console.warn('[ima-sync:install] 警告：发现同 id 的重复插件目录，会导致无法启用：')
+    for (const name of dups) console.warn(`  - plugins/${name}（文件夹名必须是 ima-sync）`)
+    console.warn('  请移出或删除上述目录后 Ctrl+R 重载')
+  }
+}
+
 console.log('')
-console.log('下一步: Obsidian → 设置 → 第三方插件 → 启用 IMA Sync → Ctrl+R 重载')
+console.log('下一步: Obsidian → 设置 → 第三方插件 → 关闭「受限模式」→ 启用 IMA Sync → Ctrl+R 重载')

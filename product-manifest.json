@@ -17,11 +17,12 @@
       "en": "Linyilu Langya Timeline · www.linyilu.com"
     },
     "wechatAccount": "临忆录",
+    "qqGroup": "4927306",
     "authorName": "shujuliu",
     "authorEmail": "shujuliu@foxmail.com",
     "aboutDesc": {
-      "zh": "本插件是为制作《临忆录 琅琊时空》网站时的衍生品，网站为记录临沂城市历史变迁搭建的平台，欢迎访问互相学习。",
-      "en": "Companion plugin for the Linyilu Langya Timeline project — a platform documenting urban history. Visit the site to learn more."
+      "zh": "本插件是为制作《临忆录 琅琊时空》网站时的衍生品，网站为记录临沂城市历史变迁搭建的平台，欢迎访问互相学习。QQ 交流群：4927306",
+      "en": "Companion plugin for the Linyilu Langya Timeline project — a platform documenting urban history. Visit the site to learn more. QQ group: 4927306"
     },
     "copyrightHolder": "shujuliu",
     "copyrightYear": 2026
@@ -54,7 +55,29 @@
       "apiBasePath": "/api/v1/ima-sync/license",
       "activatePath": "/activate",
       "entitlementsPath": "/entitlements",
+      "unbindSelfPath": "/portal/unbind-self",
       "refreshIntervalHours": 24
+    },
+    "portalPath": "/p/ima-sync/license",
+    "freeTier": {
+      "benefits": {
+        "zh": [
+          "同步当前文档（不占日额度）",
+          "批量上传每日最多 50 篇",
+          "一键排版预览每日 5 次（基础规则）",
+          "链接解析每日 5 次",
+          "最多 1 个知识库 · 1 个同步目录",
+          "附件与限流退避"
+        ],
+        "en": [
+          "Sync current document (no daily quota)",
+          "Batch upload up to 50 notes/day",
+          "Format-once preview 5/day (core rules)",
+          "Link enrich 5/day",
+          "Up to 1 knowledge base · 1 sync folder",
+          "Attachments and rate-limit backoff"
+        ]
+      }
     },
     "proTier": {
       "planned": true,
@@ -63,15 +86,23 @@
         "zh": [
           "推送可检索验证",
           "智能去重",
+          "库体检与治理报告",
+          "一键排版不限 · 完整规则与写回",
+          "链接解析不限 · 推送前自动解析",
           "同步报告与失败队列",
-          "多同步目录",
+          "多知识库 · 多同步目录",
+          "可定制插件品牌（白标）",
           "优先支持"
         ],
         "en": [
           "Post-push search verification",
           "Smart dedup",
+          "Vault health check & govern reports",
+          "Unlimited format-once · full rules & write-back",
+          "Unlimited link enrich · enrich-on-push",
           "Sync reports & retry queue",
-          "Multiple sync folders",
+          "Multiple knowledge bases · sync folders",
+          "Customizable plugin branding (white-label)",
           "Priority support"
         ]
       }

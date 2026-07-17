@@ -11,9 +11,11 @@
 | 项 | 状态 |
 |----|------|
 | 公开仓库 `shujuliu2026/ima-sync-plugin` | ✅ 已存在 |
-| GitHub 最新 Release | ⚠️ **v1.5.42**（待发 **v1.5.44**） |
-| 本地 `manifest.json` / `dist/` | ✅ **1.5.44** |
-| `npm run chronicle:ima-sync-pregate` | ✅ 230 + 14 PASS |
+| 本地源码 `manifest.json` | ✅ **1.5.60**（本 monorepo） |
+| 官网 downloads zip | ✅ **1.5.57**（`npm run tools:publish` 后再对齐源码） |
+| GitHub Release | 以 [Releases](https://github.com/shujuliu2026/ima-sync-plugin/releases) 页为准；发版 tag 须 = `manifest.version` |
+| `npm run chronicle:ima-sync-pregate` | ✅ 发版前必跑 |
+| `npm run chronicle:ima-sync-pregate:quick` | ✅ 开发快测 ~2s |
 | `README.en.md` · `LICENSE` | ✅ |
 | community.obsidian.md 提交 | ⬜ 待发 Release 后由作者操作 |
 | PR 说明草稿 | [`COMMUNITY-PR-DRAFT.md`](./COMMUNITY-PR-DRAFT.md) |
@@ -48,7 +50,7 @@ npm run chronicle:export-ima-sync-repo -- --out D:/repos/ima-sync-plugin
 | `id` | `ima-sync`（与文件夹名一致） | ✅ |
 | `name` | 英文可读 | `IMA Sync` |
 | `description` | **英文**，≤200 字符 | ✅ |
-| `version` | 与 changelog / Release tag 一致 | `1.5.44` |
+| `version` | 与 changelog / Release tag 一致 | `1.5.60`（源码；官网 zip 见 downloads） |
 | `minAppVersion` | 与 `versions.json` 一致 | `1.4.0` |
 | `author` / `authorUrl` | 真实作者 | ✅ |
 | `isDesktopOnly` | `true` | ✅ |
@@ -67,21 +69,21 @@ npm ci
 npm run pregate
 npm run bundle
 
-# 确认 dist/manifest.json version = 1.5.44
+# 确认 dist/manifest.json version = 当前待发版号（现源码 1.5.60）
 git add manifest.json main.js styles.css versions.json   # 若根目录与 dist 同步策略见 release.yml
-git commit -m "chore(release): v1.5.44"
-git tag v1.5.44
+git commit -m "chore(release): v1.5.60"
+git tag v1.5.60
 git push origin main
-git push origin v1.5.44
+git push origin v1.5.60
 ```
 
-推送 `v1.5.44` tag 后，`.github/workflows/release.yml` 会自动 pregate → bundle → 创建 Release 并上传附件。
+推送与 `manifest.version` 一致的 tag 后，`.github/workflows/release.yml` 会自动 pregate → bundle → 创建 Release 并上传附件。
 
 **wikimap 宿主发版（网站下载 zip）**：
 
 ```bash
 npm run chronicle:ima-sync-pregate
-npm run tools:publish   # → apps/web/public/downloads/ima-sync/ima-sync-v1.5.44.zip
+npm run tools:publish   # → apps/web/public/downloads/ima-sync/ima-sync-v*.zip
 ```
 
 ### 3.2 在 community.obsidian.md 提交
@@ -115,7 +117,7 @@ npm run tools:publish   # → apps/web/public/downloads/ima-sync/ima-sync-v1.5.4
 1. 测试者安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat)  
 2. **Settings → BRAT → Add Beta plugin**  
 3. 粘贴 `product-manifest.json` → `distribution.brat.repoUrl`  
-4. 选择 `main` 或 `v1.5.44` tag，验证 bundle 安装与推送  
+4. 选择 `main` 或与当前 Release 一致的 `v*` tag，验证 bundle 安装与推送  
 
 ---
 

@@ -161,4 +161,4 @@ npm run ima-sync:stats:seed    # IMA Sync 演示数据
 | IMA-P1 | 白标 · 独立 CI | ✅ |
 | IMA-P2 | 独立 git 仓库 | ✅ |
 | IMA-P3 | 社区上架 · versions.json | ✅ |
-| IMA-Pro-1 | Trust Beta · v1.5.39 | 🟡 pregate ✅ · 凭据待用户配置 |
+| IMA-Pro-1 | Trust Pro · 源码 v1.5.60 · 官网 zip 1.5.57 | ✅ pregate · License 云端已接；社区上架见 docs/COMMUNITY.md |

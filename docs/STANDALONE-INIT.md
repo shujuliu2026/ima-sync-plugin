@@ -1,11 +1,11 @@
 # IMA Sync · 独立仓库初始化
 
-> 由 `npm run chronicle:export-ima-sync-repo` 从 wikimap 导出 · 2026-07-13
+> 由 `npm run chronicle:export-ima-sync-repo` 从 wikimap 导出 · 2026-07-17
 
 ## 1. 初始化 git
 
 ```bash
-cd ima-sync-export-v1544
+cd ima-sync-plugin-export
 git init
 npm ci
 npm run pregate

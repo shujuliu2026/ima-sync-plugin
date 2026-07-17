@@ -8,7 +8,7 @@
 
 | 层 | 说明 |
 |----|------|
-| 插件 | 默认关闭 · 可开 · `lib/telemetry.js` · `client_channel` + 可选 `tenantId` · `ima.install` 例外始终一次 |
+| 插件 | 默认开启 · 可关 · `lib/telemetry.js` · `client_channel` + 可选 `tenantId` · `ima.install` 例外始终一次 |
 | 采集 | POST `analytics.defaultEventsUrl`（来自 `product-manifest.json`） |
 | Hub | wikimap `scripts/ima-sync-analytics/` 或自建兼容端点 |
 
@@ -40,8 +40,8 @@
 
 - Hook：`ima.install` · `ima.heartbeat` · `ima.sync` · `ima.feedback` 等
 - Payload：**不含** API Key、笔记路径、正文
-- 用户控制：反馈弹窗 → 匿名统计开关（默认关）
-- `ima.install`：首次启用上报一次（版本/地域），与 opt-in 无关
+- 用户控制：反馈弹窗 → 匿名统计开关（默认开 · opt-out）
+- `ima.install`：首次启用上报一次（版本/地域），与开关无关
 
 完整字段见 wikimap `scripts/chronicle/obsidian-plugin/ima-sync/lib/telemetry.js`。
 
@@ -63,6 +63,6 @@
 1. 实现 POST `/analytics/events` 接收 JSON 事件数组
 2. 校验 `client_channel` / `tenantId` 白名单
 3. 在 manifest 写入 `defaultEventsUrl`
-4. 插件侧 **默认关闭**；用户可在反馈弹窗开启；`ima.install` 仍会上报一次
+4. 插件侧 **默认开启**；用户可在反馈弹窗关闭；`ima.install` 仍会上报一次
 
 wikimap 参考：`scripts/ima-sync-analytics/README.md`

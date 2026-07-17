@@ -2,8 +2,8 @@
 
 > **Plugin repo**: https://github.com/shujuliu2026/ima-sync-plugin  
 > **提交入口（2026）**: [community.obsidian.md](https://community.obsidian.md) → Plugins → New plugin  
-> **Release 目标**: `v1.5.44`  
-> **Date**: 2026-07-13
+> **Release 目标**: `v1.5.60`（与 monorepo `manifest.json` 对齐；发 tag 前再核对）  
+> **Date**: 2026-07-15
 
 ---
 
@@ -45,7 +45,7 @@ IMA Sync — Obsidian to Tencent IMA knowledge base
 ## Repository
 
 - https://github.com/shujuliu2026/ima-sync-plugin
-- Latest release: https://github.com/shujuliu2026/ima-sync-plugin/releases/tag/v1.5.44
+- Latest release: https://github.com/shujuliu2026/ima-sync-plugin/releases（tag 须 = manifest.version）
 - README: https://github.com/shujuliu2026/ima-sync-plugin/blob/main/README.en.md
 
 ## Third-party services
@@ -100,8 +100,8 @@ Pull-from-cloud / full bidirectional sync are **hidden by default** and marked e
 | Item | Action |
 |------|--------|
 | Public repo live | ✅ `shujuliu2026/ima-sync-plugin` |
-| Release **v1.5.44** | ⬜ push tag → CI 上传 main.js, manifest.json, styles.css, versions.json |
-| Default branch manifest | ⬜ HEAD `version` = `1.5.44` |
+| Release **v1.5.60**（或当时 HEAD version） | ⬜ 发 tag 后 CI 上传 main.js / manifest / styles / versions |
+| Default branch manifest | ⬜ HEAD `version` 与 Release tag 一致（现 monorepo **1.5.60**） |
 | Screenshots | ⬜ 1～2 张 PNG |
 | community.obsidian.md | ⬜ 绑定 GitHub → New plugin → 填 repo URL |
 | BRAT smoke test | 可选：上架前给内测者 |
